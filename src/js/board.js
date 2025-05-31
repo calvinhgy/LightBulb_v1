@@ -178,9 +178,6 @@ class Board {
         this.isSwapping = true;
         
         // Set up animation properties for visual swap
-        const tempX = bulb1.x;
-        const tempY = bulb1.y;
-        
         bulb1.sourceX = bulb1.x;
         bulb1.sourceY = bulb1.y;
         bulb1.targetX = bulb2.x;
@@ -190,15 +187,10 @@ class Board {
         
         bulb2.sourceX = bulb2.x;
         bulb2.sourceY = bulb2.y;
-        bulb2.targetX = tempX;
-        bulb2.targetY = tempY;
+        bulb2.targetX = bulb1.x;
+        bulb2.targetY = bulb1.y;
         bulb2.animationProgress = 0;
         bulb2.isSwapping = true;
-        
-        // Swap types immediately for match detection
-        const tempType = bulb1.type;
-        bulb1.type = bulb2.type;
-        bulb2.type = tempType;
         
         // Start swap animation
         this.animateSwap(bulb1, bulb2);
@@ -219,6 +211,40 @@ class Board {
             Sound.play('swap');
         }
         
+        // Swap positions in the grid immediately for correct match detection
+        // Store original positions
+        const bulb1OrigRow = bulb1.row;
+        const bulb1OrigCol = bulb1.col;
+        const bulb2OrigRow = bulb2.row;
+        const bulb2OrigCol = bulb2.col;
+        
+        // Update row and col properties
+        const tempRow = bulb1.row;
+        const tempCol = bulb1.col;
+        bulb1.row = bulb2.row;
+        bulb1.col = bulb2.col;
+        bulb2.row = tempRow;
+        bulb2.col = tempCol;
+        
+        // Update grid references
+        this.grid[bulb1.row][bulb1.col] = bulb1;
+        this.grid[bulb2.row][bulb2.col] = bulb2;
+        
+        // Check for matches immediately after swapping positions
+        const matches = this.findMatches();
+        
+        if (matches.length === 0) {
+            // No matches - swap back immediately
+            bulb1.row = bulb1OrigRow;
+            bulb1.col = bulb1OrigCol;
+            bulb2.row = bulb2OrigRow;
+            bulb2.col = bulb2OrigCol;
+            
+            // Restore grid references
+            this.grid[bulb1.row][bulb1.col] = bulb1;
+            this.grid[bulb2.row][bulb2.col] = bulb2;
+        }
+        
         const animate = () => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
@@ -242,73 +268,24 @@ class Board {
                 bulb2.x = bulb2.targetX;
                 bulb2.y = bulb2.targetY;
                 
-                // Update row and col properties to match new positions
-                const tempRow = bulb1.row;
-                const tempCol = bulb1.col;
-                
-                bulb1.row = bulb2.row;
-                bulb1.col = bulb2.col;
-                bulb2.row = tempRow;
-                bulb2.col = tempCol;
-                
-                // Update grid references
-                this.grid[bulb1.row][bulb1.col] = bulb1;
-                this.grid[bulb2.row][bulb2.col] = bulb2;
-                
                 bulb1.isSwapping = false;
                 bulb2.isSwapping = false;
                 
-                // Check for matches
-                const matches = this.findMatches();
+                // Force update of x and y coordinates to match grid position
+                bulb1.x = bulb1.col * this.bulbSize;
+                bulb1.y = bulb1.row * this.bulbSize;
+                bulb2.x = bulb2.col * this.bulbSize;
+                bulb2.y = bulb2.row * this.bulbSize;
                 
                 if (matches.length > 0) {
                     // Valid swap - process matches
-                    console.log(`Found ${matches.length} matches after swap`);
                     this.processMatches(matches);
                 } else {
-                    // Invalid swap - swap back
-                    console.log('No matches found, swapping back');
-                    
-                    // Swap types back
-                    const tempType = bulb1.type;
-                    bulb1.type = bulb2.type;
-                    bulb2.type = tempType;
-                    
-                    // Swap positions back
-                    const tempRow2 = bulb1.row;
-                    const tempCol2 = bulb1.col;
-                    
-                    bulb1.row = bulb2.row;
-                    bulb1.col = bulb2.col;
-                    bulb2.row = tempRow2;
-                    bulb2.col = tempCol2;
-                    
-                    // Update grid references again
-                    this.grid[bulb1.row][bulb1.col] = bulb1;
-                    this.grid[bulb2.row][bulb2.col] = bulb2;
-                    
-                    // Animate the swap back
-                    bulb1.sourceX = bulb1.x;
-                    bulb1.sourceY = bulb1.y;
-                    bulb1.targetX = bulb2.x;
-                    bulb1.targetY = bulb2.y;
-                    bulb1.animationProgress = 0;
-                    bulb1.isSwapping = true;
-                    
-                    bulb2.sourceX = bulb2.x;
-                    bulb2.sourceY = bulb2.y;
-                    bulb2.targetX = bulb1.sourceX;
-                    bulb2.targetY = bulb1.sourceY;
-                    bulb2.animationProgress = 0;
-                    bulb2.isSwapping = true;
-                    
-                    // Play invalid move sound
+                    // Invalid swap - already swapped back, just play sound
                     if (typeof Sound !== 'undefined') {
                         Sound.play('invalid');
                     }
-                    
-                    // Animate swap back
-                    this.animateSwapBack(bulb1, bulb2);
+                    this.isSwapping = false;
                 }
             }
         };
@@ -327,6 +304,11 @@ class Board {
         const duration = 200;
         const startTime = Date.now();
         
+        // Play invalid move sound
+        if (typeof Sound !== 'undefined') {
+            Sound.play('invalid');
+        }
+        
         const animate = () => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
@@ -350,22 +332,9 @@ class Board {
                 bulb2.x = bulb2.targetX;
                 bulb2.y = bulb2.targetY;
                 
-                // Update row and col properties to match original positions
-                const tempRow = bulb1.row;
-                const tempCol = bulb1.col;
-                
-                bulb1.row = bulb2.row;
-                bulb1.col = bulb2.col;
-                bulb2.row = tempRow;
-                bulb2.col = tempCol;
-                
-                // Update grid references
-                this.grid[bulb1.row][bulb1.col] = bulb1;
-                this.grid[bulb2.row][bulb2.col] = bulb2;
-                
+                // Reset swap flags
                 bulb1.isSwapping = false;
                 bulb2.isSwapping = false;
-                
                 this.isSwapping = false;
             }
         };
@@ -382,29 +351,69 @@ class Board {
         const matches = [];
         const matchedPositions = new Set(); // Track positions to avoid duplicates
         
+        console.log(`Finding matches on the board...`);
+        
+        // Debug: Print the entire board state
+        console.log("Current board state:");
+        for (let row = 0; row < this.rows; row++) {
+            let rowStr = "";
+            for (let col = 0; col < this.cols; col++) {
+                const bulb = this.grid[row][col];
+                if (bulb) {
+                    rowStr += bulb.type.charAt(0) + " ";
+                } else {
+                    rowStr += "- ";
+                }
+            }
+            console.log(rowStr);
+        }
+        
         // Check horizontal matches
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols - 2; col++) {
-                const bulb = this.getBulb(row, col);
+                const bulb = this.grid[row][col];
+                if (!bulb) {
+                    console.error(`Missing bulb at [${row},${col}]`);
+                    continue;
+                }
+                
                 const type = bulb.type;
+                const bulb2 = this.grid[row][col + 1];
+                const bulb3 = this.grid[row][col + 2];
+                
+                if (!bulb2 || !bulb3) {
+                    console.error(`Missing adjacent bulbs at row ${row}, col ${col}`);
+                    continue;
+                }
                 
                 // Check if we have at least 3 in a row
-                if (this.getBulb(row, col + 1).type === type && 
-                    this.getBulb(row, col + 2).type === type) {
+                if (bulb2.type === type && bulb3.type === type) {
+                    console.log(`Found horizontal match at [${row},${col}] of type ${type}`);
                     
                     // Find how far this match extends
                     let matchLength = 3;
-                    while (col + matchLength < this.cols && 
-                           this.getBulb(row, col + matchLength).type === type) {
-                        matchLength++;
+                    while (col + matchLength < this.cols) {
+                        const nextBulb = this.grid[row][col + matchLength];
+                        if (nextBulb && nextBulb.type === type) {
+                            matchLength++;
+                        } else {
+                            break;
+                        }
                     }
+                    
+                    console.log(`Match extends to length ${matchLength}`);
                     
                     // Add all bulbs in this match
                     for (let i = 0; i < matchLength; i++) {
                         const pos = `${row},${col + i}`;
                         if (!matchedPositions.has(pos)) {
                             matchedPositions.add(pos);
-                            matches.push(this.getBulb(row, col + i));
+                            const matchBulb = this.grid[row][col + i];
+                            if (matchBulb) {
+                                matches.push(matchBulb);
+                            } else {
+                                console.error(`Missing bulb in match at [${row},${col + i}]`);
+                            }
                         }
                     }
                     
@@ -417,26 +426,49 @@ class Board {
         // Check vertical matches
         for (let col = 0; col < this.cols; col++) {
             for (let row = 0; row < this.rows - 2; row++) {
-                const bulb = this.getBulb(row, col);
+                const bulb = this.grid[row][col];
+                if (!bulb) {
+                    console.error(`Missing bulb at [${row},${col}]`);
+                    continue;
+                }
+                
                 const type = bulb.type;
+                const bulb2 = this.grid[row + 1][col];
+                const bulb3 = this.grid[row + 2][col];
+                
+                if (!bulb2 || !bulb3) {
+                    console.error(`Missing adjacent bulbs at row ${row}, col ${col}`);
+                    continue;
+                }
                 
                 // Check if we have at least 3 in a column
-                if (this.getBulb(row + 1, col).type === type && 
-                    this.getBulb(row + 2, col).type === type) {
+                if (bulb2.type === type && bulb3.type === type) {
+                    console.log(`Found vertical match at [${row},${col}] of type ${type}`);
                     
                     // Find how far this match extends
                     let matchLength = 3;
-                    while (row + matchLength < this.rows && 
-                           this.getBulb(row + matchLength, col).type === type) {
-                        matchLength++;
+                    while (row + matchLength < this.rows) {
+                        const nextBulb = this.grid[row + matchLength][col];
+                        if (nextBulb && nextBulb.type === type) {
+                            matchLength++;
+                        } else {
+                            break;
+                        }
                     }
+                    
+                    console.log(`Match extends to length ${matchLength}`);
                     
                     // Add all bulbs in this match
                     for (let i = 0; i < matchLength; i++) {
                         const pos = `${row + i},${col}`;
                         if (!matchedPositions.has(pos)) {
                             matchedPositions.add(pos);
-                            matches.push(this.getBulb(row + i, col));
+                            const matchBulb = this.grid[row + i][col];
+                            if (matchBulb) {
+                                matches.push(matchBulb);
+                            } else {
+                                console.error(`Missing bulb in match at [${row + i},${col}]`);
+                            }
                         }
                     }
                     
@@ -446,6 +478,7 @@ class Board {
             }
         }
         
+        console.log(`Found ${matches.length} matching bulbs`);
         return matches;
     }
     
@@ -459,8 +492,14 @@ class Board {
             return;
         }
         
+        console.log(`Processing ${matches.length} matches`);
+        
+        // Store matched bulbs for later reference
+        this.matchedBulbs = [...matches];
+        
         // Mark bulbs as matched
         for (const bulb of matches) {
+            console.log(`Marking bulb at [${bulb.row},${bulb.col}] of type ${bulb.type} as matched`);
             bulb.matched = true;
             bulb.animationProgress = 0;
             bulb.matchTime = Date.now();
@@ -494,8 +533,9 @@ class Board {
         }
         
         // After a shorter delay, remove matches and trigger cascade
+        console.log(`Scheduling removal of matches in 500ms`);
         setTimeout(() => {
-            this.removeMatches(matches);
+            this.removeMatches(this.matchedBulbs);
         }, 500); // Reduced to 0.5 seconds
     }
     
@@ -522,11 +562,14 @@ class Board {
      * @param {Array} matches - Array of matched bulbs
      */
     removeMatches(matches) {
+        console.log(`Removing ${matches.length} matched bulbs`);
+        
         // Create a map to track empty positions
         const emptyPositions = new Map();
         
         // Mark positions as empty
         for (const bulb of matches) {
+            console.log(`Processing matched bulb at [${bulb.row},${bulb.col}] of type ${bulb.type}`);
             const col = bulb.col;
             if (!emptyPositions.has(col)) {
                 emptyPositions.set(col, []);
@@ -535,20 +578,32 @@ class Board {
             bulb.matched = false;
         }
         
+        // Clear the matched bulbs array
+        this.matchedBulbs = [];
+        
         // Process each column with empty positions
         for (const [col, rows] of emptyPositions.entries()) {
+            console.log(`Processing column ${col} with ${rows.length} empty positions`);
+            
             // Sort rows in descending order (bottom to top)
             rows.sort((a, b) => b - a);
             
             // For each empty position, move bulbs down
             for (const emptyRow of rows) {
+                console.log(`Processing empty position at [${emptyRow},${col}]`);
+                
                 // Move all bulbs above this position down
                 for (let row = emptyRow; row > 0; row--) {
                     const bulbAbove = this.grid[row - 1][col];
                     const currentBulb = this.grid[row][col];
                     
+                    console.log(`Moving bulb from [${row-1},${col}] to [${row},${col}]`);
+                    
                     // Copy properties from bulb above
                     currentBulb.type = bulbAbove.type;
+                    
+                    // Update row reference for the bulb that's moving down
+                    bulbAbove.row = row;
                     
                     // Set animation properties with staggered timing for more dynamic effect
                     currentBulb.sourceY = bulbAbove.y;
@@ -563,7 +618,10 @@ class Board {
                 // Create a new bulb at the top
                 const topBulb = this.grid[0][col];
                 const newType = Utils.bulbTypes[Utils.randomInt(0, Utils.bulbTypes.length - 1)];
+                console.log(`Creating new bulb of type ${newType} at [0,${col}]`);
                 topBulb.type = newType;
+                topBulb.row = 0; // Ensure row is set correctly
+                topBulb.col = col; // Ensure column is set correctly
                 topBulb.sourceY = -this.bulbSize * 1.5; // Start further above the board for more dramatic fall
                 topBulb.targetY = topBulb.y;
                 topBulb.animationProgress = 0;
@@ -580,17 +638,52 @@ class Board {
             Sound.play('fall');
         }
         
+        console.log(`Scheduling check for new matches in 500ms`);
+        
         // Wait for animations to complete before checking for new matches
         // Reduced to 0.5 seconds total
         setTimeout(() => {
             this.isFalling = false;
+            console.log(`Fall animation complete, checking for new matches`);
+            
+            // Ensure all bulbs have correct positions in the grid
+            for (let row = 0; row < this.rows; row++) {
+                for (let col = 0; col < this.cols; col++) {
+                    const bulb = this.grid[row][col];
+                    bulb.row = row;
+                    bulb.col = col;
+                    bulb.x = col * this.bulbSize;
+                    bulb.y = row * this.bulbSize;
+                    bulb.targetX = bulb.x;
+                    bulb.targetY = bulb.y;
+                    bulb.isFalling = false;
+                }
+            }
+            
+            // Debug: Print the board state after falling
+            console.log("Board state after falling:");
+            for (let row = 0; row < this.rows; row++) {
+                let rowStr = "";
+                for (let col = 0; col < this.cols; col++) {
+                    const bulb = this.grid[row][col];
+                    if (bulb) {
+                        rowStr += bulb.type.charAt(0) + " ";
+                    } else {
+                        rowStr += "- ";
+                    }
+                }
+                console.log(rowStr);
+            }
             
             // Check for new matches
             const newMatches = this.findMatches();
+            console.log(`Found ${newMatches.length} new matches after falling`);
+            
             if (newMatches.length > 0) {
                 this.processMatches(newMatches);
             } else {
                 this.isSwapping = false;
+                console.log(`No new matches, ready for next move`);
             }
         }, 500); // 500ms total animation time
     }
