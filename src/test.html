@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五彩灯泡 - Test Page</title>
+    <style>
+        body {
+            background-color: #1A1A2E;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+        }
+        
+        .test-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .test-section {
+            background-color: #2A2A4E;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        h2 {
+            margin-top: 0;
+            color: #FFB344;
+        }
+        
+        canvas {
+            border: 2px solid #444;
+            background-color: #1A1A2E;
+            margin: 10px 0;
+            max-width: 100%;
+        }
+        
+        button {
+            background-color: #3A3A6E;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #4A4A8E;
+        }
+        
+        .log-container {
+            background-color: #111;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        
+        .success {
+            color: #3AFF5C;
+        }
+        
+        .error {
+            color: #FF3A3A;
+        }
+        
+        .warning {
+            color: #FFD83A;
+        }
+    </style>
+</head>
+<body>
+    <h1>五彩灯泡 - Test Page</h1>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h2>Canvas Test</h2>
+            <canvas id="testCanvas" width="400" height="400"></canvas>
+            <div>
+                <button id="drawGridBtn">Draw Grid</button>
+                <button id="drawBulbsBtn">Draw Bulbs</button>
+                <button id="clearCanvasBtn">Clear Canvas</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Module Tests</h2>
+            <div>
+                <button id="testUtilsBtn">Test Utils</button>
+                <button id="testBoardBtn">Test Board</button>
+                <button id="testGameBtn">Test Game</button>
+                <button id="testUIBtn">Test UI</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Log</h2>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+    </div>
+    
+    <script src="js/utils.js"></script>
+    <script>
+        // Test logging function
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Canvas test functions
+        document.getElementById('drawGridBtn').addEventListener('click', function() {
+            const canvas = document.getElementById('testCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            const rows = 8;
+            const cols = 8;
+            const cellSize = Math.min(canvas.width, canvas.height) / Math.max(rows, cols);
+            
+            // Draw cells
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    ctx.fillStyle = (row + col) % 2 === 0 ? '#2A2A4E' : '#3A3A6E';
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+            }
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            
+            // Horizontal lines
+            for (let row = 0; row <= rows; row++) {
+                ctx.beginPath();
+                ctx.moveTo(0, row * cellSize);
+                ctx.lineTo(cols * cellSize, row * cellSize);
+                ctx.stroke();
+            }
+            
+            // Vertical lines
+            for (let col = 0; col <= cols; col++) {
+                ctx.beginPath();
+                ctx.moveTo(col * cellSize, 0);
+                ctx.lineTo(col * cellSize, rows * cellSize);
+                ctx.stroke();
+            }
+            
+            log('Grid drawn successfully', 'success');
+        });
+        
+        document.getElementById('drawBulbsBtn').addEventListener('click', function() {
+            const canvas = document.getElementById('testCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw bulbs
+            const rows = 8;
+            const cols = 8;
+            const cellSize = Math.min(canvas.width, canvas.height) / Math.max(rows, cols);
+            const bulbTypes = ['red', 'yellow', 'blue', 'green'];
+            const colors = {
+                red: '#FF3A3A',
+                yellow: '#FFD83A',
+                blue: '#3A8CFF',
+                green: '#3AFF5C'
+            };
+            
+            // Create random grid
+            const grid = [];
+            for (let row = 0; row < rows; row++) {
+                grid[row] = [];
+                for (let col = 0; col < cols; col++) {
+                    const typeIndex = Math.floor(Math.random() * bulbTypes.length);
+                    grid[row][col] = bulbTypes[typeIndex];
+                }
+            }
+            
+            // Draw bulbs
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const bulbType = grid[row][col];
+                    const x = col * cellSize;
+                    const y = row * cellSize;
+                    const padding = cellSize * 0.1;
+                    const radius = (cellSize - padding * 2) / 2;
+                    
+                    // Draw bulb background
+                    ctx.fillStyle = '#222';
+                    ctx.beginPath();
+                    ctx.arc(x + cellSize/2, y + cellSize/2, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw bulb color
+                    ctx.fillStyle = colors[bulbType];
+                    ctx.beginPath();
+                    ctx.arc(x + cellSize/2, y + cellSize/2, radius - 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw highlight
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(x + cellSize/2 - radius/3, y + cellSize/2 - radius/3, radius/3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            log('Bulbs drawn successfully', 'success');
+        });
+        
+        document.getElementById('clearCanvasBtn').addEventListener('click', function() {
+            const canvas = document.getElementById('testCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            log('Canvas cleared', 'info');
+        });
+        
+        // Module test functions
+        document.getElementById('testUtilsBtn').addEventListener('click', function() {
+            try {
+                if (typeof Utils === 'undefined') {
+                    throw new Error('Utils module not loaded');
+                }
+                
+                log('Testing Utils.randomInt: ' + Utils.randomInt(1, 10), 'info');
+                log('Testing Utils.formatNumber: ' + Utils.formatNumber(1234567), 'info');
+                log('Testing Utils.formatTime: ' + Utils.formatTime(125), 'info');
+                log('Utils module tests passed', 'success');
+            } catch (error) {
+                log('Utils test error: ' + error.message, 'error');
+            }
+        });
+        
+        document.getElementById('testBoardBtn').addEventListener('click', function() {
+            try {
+                log('Board module test not implemented yet', 'warning');
+            } catch (error) {
+                log('Board test error: ' + error.message, 'error');
+            }
+        });
+        
+        document.getElementById('testGameBtn').addEventListener('click', function() {
+            try {
+                log('Game module test not implemented yet', 'warning');
+            } catch (error) {
+                log('Game test error: ' + error.message, 'error');
+            }
+        });
+        
+        document.getElementById('testUIBtn').addEventListener('click', function() {
+            try {
+                log('UI module test not implemented yet', 'warning');
+            } catch (error) {
+                log('UI test error: ' + error.message, 'error');
+            }
+        });
+        
+        // Initial log
+        log('Test page loaded', 'info');
+    </script>
+</body>
+</html>
