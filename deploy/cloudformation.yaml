@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  LightBulbWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "lightbulb-game-web-${AWS::AccountId}"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+  
+  LightBulbCloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Sub "${LightBulbWebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com"
+            Id: S3Origin
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: ["GET", "HEAD"]
+          CachedMethods: ["GET", "HEAD"]
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+
+Outputs:
+  WebsiteURL:
+    Description: URL for the website
+    Value: !Sub "http://${LightBulbWebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com"
+  CloudFrontURL:
+    Description: CloudFront URL
+    Value: !Sub "https://${LightBulbCloudFront.DomainName}"
+  BucketName:
+    Description: S3 Bucket Name
+    Value: !Ref LightBulbWebsiteBucket

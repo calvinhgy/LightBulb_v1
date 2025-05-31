@@ -1,0 +1,8 @@
+This directory will contain game assets such as:
+
+- Images for light bulbs
+- Background images
+- Sound effects
+- Music tracks
+
+For development purposes, you can use colored circles for the light bulbs as implemented in the current code.

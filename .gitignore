@@ -1,0 +1,16 @@
+# Ignore deployment artifacts
+*.zip
+test-page.html
+test.html
+
+# Ignore AWS credentials
+.aws/
+credentials
+config
+
+# Ignore logs
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db

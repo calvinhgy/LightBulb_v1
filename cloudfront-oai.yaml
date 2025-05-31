@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  LightBulbOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "OAI for LightBulb Game"
+  
+  LightBulbBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: lightbulb-game-web-142310301966
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: arn:aws:s3:::lightbulb-game-web-142310301966/*
+            Principal:
+              CanonicalUser: !GetAtt LightBulbOriginAccessIdentity.S3CanonicalUserId
+  
+  LightBulbCloudFrontUpdate:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: lightbulb-game-web-142310301966.s3.amazonaws.com
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${LightBulbOriginAccessIdentity}"
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: ["GET", "HEAD"]
+          CachedMethods: ["GET", "HEAD"]
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+
+Outputs:
+  CloudFrontURL:
+    Description: CloudFront URL
+    Value: !Sub "https://${LightBulbCloudFrontUpdate.DomainName}"

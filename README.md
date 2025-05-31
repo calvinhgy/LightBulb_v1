@@ -14,6 +14,33 @@ A web-based match-3 puzzle game featuring colorful light bulbs in a 40x40 grid.
 - Cascading effects and chain reactions
 - Progressive difficulty through levels
 
+## Deployment Instructions
+
+### Option 1: Using the Deployment Script
+
+1. Run the deployment script:
+   ```
+   ./deploy-lightbulb.sh
+   ```
+
+2. Follow the instructions provided by the script to complete the deployment using AWS CloudFormation.
+
+3. After the CloudFormation stack is created, upload the website files to the S3 bucket.
+
+4. Access your game through the CloudFront URL provided in the CloudFormation outputs.
+
+### Option 2: Manual Deployment to AWS
+
+1. Create an S3 bucket for hosting the website files.
+
+2. Configure the S3 bucket for static website hosting with index.html as both the index and error document.
+
+3. Upload all files from the `src/` directory to the S3 bucket.
+
+4. Create a CloudFront distribution pointing to the S3 bucket to deliver the website content globally with HTTPS.
+
+5. Access your game through the CloudFront domain name.
+
 ## Documentation Structure
 
 This repository contains comprehensive documentation for the game development process, following prompt-driven development principles. The documentation is organized as follows:
@@ -59,22 +86,13 @@ To begin development:
 │   ├── design/            # Game design documents
 │   ├── technical/         # Technical specifications
 │   └── assets/            # Asset requirements
-├── src/                   # Source code (to be implemented)
+├── src/                   # Source code
 │   ├── js/                # JavaScript files
 │   ├── css/               # CSS stylesheets
 │   └── assets/            # Game assets
+├── deploy-lightbulb.sh    # Deployment script
 └── README.md              # Project overview
 ```
-
-## Next Steps
-
-After reviewing the documentation:
-
-1. Implement the core game mechanics
-2. Create or acquire the necessary assets
-3. Develop the user interface
-4. Implement game progression systems
-5. Test and refine the gameplay experience
 
 ## License
 

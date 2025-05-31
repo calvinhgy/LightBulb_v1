@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小化灯泡游戏</title>
+    <style>
+        body {
+            background-color: #1A1A2E;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        canvas {
+            border: 2px solid red;
+            background-color: #2A2A4E;
+            margin: 20px;
+        }
+        
+        button {
+            background-color: #3A3A6E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background-color: #4A4A8E;
+        }
+    </style>
+</head>
+<body>
+    <h1>五彩灯泡 - 最小化版本</h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <button id="startButton">开始游戏</button>
+
+    <script>
+        // 游戏变量
+        const BULB_TYPES = ['red', 'yellow', 'blue', 'green'];
+        const COLORS = {
+            red: '#FF3A3A',
+            yellow: '#FFD83A',
+            blue: '#3A8CFF',
+            green: '#3AFF5C'
+        };
+        
+        let canvas, ctx;
+        let rows = 8, cols = 8;
+        let bulbSize;
+        let grid = [];
+        
+        // 初始化游戏
+        function initGame() {
+            console.log('初始化游戏');
+            
+            // 获取画布和上下文
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // 计算灯泡大小
+            bulbSize = Math.floor(Math.min(canvas.width, canvas.height) / Math.max(rows, cols));
+            console.log(`灯泡大小: ${bulbSize}px`);
+            
+            // 创建网格
+            createGrid();
+            
+            // 渲染游戏
+            renderGame();
+        }
+        
+        // 创建网格
+        function createGrid() {
+            grid = [];
+            
+            for (let row = 0; row < rows; row++) {
+                grid[row] = [];
+                for (let col = 0; col < cols; col++) {
+                    // 随机选择灯泡类型
+                    const typeIndex = Math.floor(Math.random() * BULB_TYPES.length);
+                    grid[row][col] = {
+                        type: BULB_TYPES[typeIndex],
+                        row: row,
+                        col: col
+                    };
+                }
+            }
+            
+            console.log('网格已创建');
+        }
+        
+        // 渲染游戏
+        function renderGame() {
+            console.log('渲染游戏');
+            
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            ctx.fillStyle = '#2A2A4E';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制灯泡
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const bulb = grid[row][col];
+                    const x = col * bulbSize;
+                    const y = row * bulbSize;
+                    
+                    // 绘制灯泡
+                    drawBulb(bulb, x, y);
+                }
+            }
+            
+            // 绘制网格线
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            
+            // 水平线
+            for (let row = 0; row <= rows; row++) {
+                ctx.beginPath();
+                ctx.moveTo(0, row * bulbSize);
+                ctx.lineTo(cols * bulbSize, row * bulbSize);
+                ctx.stroke();
+            }
+            
+            // 垂直线
+            for (let col = 0; col <= cols; col++) {
+                ctx.beginPath();
+                ctx.moveTo(col * bulbSize, 0);
+                ctx.lineTo(col * bulbSize, rows * bulbSize);
+                ctx.stroke();
+            }
+        }
+        
+        // 绘制灯泡
+        function drawBulb(bulb, x, y) {
+            const padding = bulbSize * 0.1;
+            const radius = (bulbSize - padding * 2) / 2;
+            
+            // 绘制灯泡背景
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(x + bulbSize/2, y + bulbSize/2, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 绘制灯泡颜色
+            const bulbColor = COLORS[bulb.type];
+            ctx.fillStyle = bulbColor;
+            ctx.beginPath();
+            ctx.arc(x + bulbSize/2, y + bulbSize/2, radius - 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 绘制高光
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x + bulbSize/2 - radius/3, y + bulbSize/2 - radius/3, radius/3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 绘制坐标文本
+            ctx.fillStyle = '#FFF';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${bulb.row},${bulb.col}`, x + bulbSize/2, y + bulbSize/2);
+        }
+        
+        // 当文档加载完成时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('文档已加载');
+            
+            // 添加开始按钮点击事件
+            const startButton = document.getElementById('startButton');
+            startButton.addEventListener('click', function() {
+                console.log('开始按钮被点击');
+                initGame();
+            });
+            
+            // 自动初始化游戏
+            initGame();
+        });
+    </script>
+</body>
+</html>
