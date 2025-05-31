@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>五彩灯泡 Mobile Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        #game-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-container, .moves-container {
+            font-size: 1.2rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        #game-board-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        button:active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="game-header">
+            <div class="score-container">
+                <span>分数:</span>
+                <span id="score">0</span>
+            </div>
+            <div class="moves-container">
+                <span>剩余步数:</span>
+                <span id="moves">30</span>
+            </div>
+        </div>
+        
+        <div id="game-board-container">
+            <canvas id="game-background"></canvas>
+            <canvas id="game-board"></canvas>
+            <canvas id="game-effects"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="new-game">新游戏</button>
+            <button id="hint">提示</button>
+            <button id="shuffle">重排</button>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="src/js/core/LightBulb.js"></script>
+    <script src="src/js/core/MatchDetector.js"></script>
+    <script src="src/js/core/Board.js"></script>
+    <script src="src/js/core/ScoreManager.js"></script>
+    <script src="src/js/ui/Renderer.js"></script>
+    <script src="src/js/ui/TouchController.js"></script>
+    
+    <script>
+        // Simple demo implementation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create game objects
+            const gridSize = { width: 8, height: 10 };
+            const colors = ['red', 'yellow', 'blue', 'green'];
+            
+            // Create board
+            const board = new Board({
+                gridSize: gridSize,
+                colors: colors,
+                matchMinLength: 3
+            });
+            
+            // Create score manager
+            const scoreManager = new ScoreManager({
+                baseMatchScore: 100,
+                matchMultiplier: 1.5,
+                cascadeMultiplier: 1.2,
+                specialBulbMultiplier: 2.0,
+                starThresholds: [1000, 2000, 3000]
+            });
+            
+            // Initialize score manager
+            scoreManager.initializeLevel({
+                moves: 30,
+                timeLimit: null,
+                scoreTarget: {
+                    oneStarScore: 1000,
+                    twoStarScore: 2000,
+                    threeStarScore: 3000
+                },
+                objectives: [
+                    { type: 'score', target: 1000 }
+                ]
+            });
+            
+            // Create renderer
+            const renderer = new Renderer({
+                gameBoard: document.getElementById('game-board'),
+                gameBackground: document.getElementById('game-background'),
+                gameEffects: document.getElementById('game-effects'),
+                gridSize: gridSize
+            });
+            
+            // Create touch controller
+            const touchController = new TouchController(
+                document.getElementById('game-board-container')
+            );
+            
+            // Set cell converter for touch controller
+            touchController.setCellConverter((clientX, clientY) => {
+                return renderer.screenToGridCoordinates(clientX, clientY);
+            });
+            
+            // Set up board callbacks
+            board.onMatch = (match, cascadeLevel) => {
+                // Update score
+                const matchScore = scoreManager.updateScoreForMatch(match, cascadeLevel);
+                
+                // Update score display
+                document.getElementById('score').textContent = scoreManager.score;
+                
+                // Check for level completion
+                if (scoreManager.checkLevelComplete()) {
+                    setTimeout(() => {
+                        alert(`恭喜！你完成了关卡！\n分数: ${scoreManager.score}\n星级: ${scoreManager.calculateStars()}`);
+                        startNewGame();
+                    }, 1000);
+                }
+            };
+            
+            board.onSpecialCreated = (bulb, specialType) => {
+                console.log(`Created special bulb: ${specialType}`);
+            };
+            
+            // Set up touch controller callbacks
+            touchController.onCellTap = (x, y) => {
+                // Select bulb
+                const changed = board.selectBulbAt(x, y);
+                
+                if (changed) {
+                    renderer.render(board.grid);
+                }
+            };
+            
+            touchController.onSwipe = (x, y, direction) => {
+                // Get starting bulb
+                const startBulb = board.getBulbAt(x, y);
+                if (!startBulb || !startBulb.canSwap()) {
+                    return;
+                }
+                
+                // Get target coordinates based on direction
+                let targetX = x;
+                let targetY = y;
+                
+                switch (direction) {
+                    case 'up':
+                        targetY--;
+                        break;
+                    case 'down':
+                        targetY++;
+                        break;
+                    case 'left':
+                        targetX--;
+                        break;
+                    case 'right':
+                        targetX++;
+                        break;
+                }
+                
+                // Get target bulb
+                const targetBulb = board.getBulbAt(targetX, targetY);
+                if (!targetBulb || !targetBulb.canSwap()) {
+                    return;
+                }
+                
+                // Swap bulbs
+                board.swapBulbs(startBulb, targetBulb);
+                
+                // Use a move
+                scoreManager.useMove();
+                
+                // Update moves display
+                document.getElementById('moves').textContent = scoreManager.remainingMoves;
+                
+                // Check for game over
+                if (scoreManager.remainingMoves <= 0 && !scoreManager.checkLevelComplete()) {
+                    setTimeout(() => {
+                        alert(`游戏结束！\n分数: ${scoreManager.score}`);
+                        startNewGame();
+                    }, 1000);
+                }
+            };
+            
+            // Set up button handlers
+            document.getElementById('new-game').addEventListener('click', startNewGame);
+            
+            document.getElementById('hint').addEventListener('click', () => {
+                const hint = board.matchDetector.findHint(board.grid, board.gridSize);
+                
+                if (hint) {
+                    // Highlight the hint
+                    const bulb1 = board.getBulbAt(hint.bulb1.x, hint.bulb1.y);
+                    const bulb2 = board.getBulbAt(hint.bulb2.x, hint.bulb2.y);
+                    
+                    if (bulb1 && bulb2) {
+                        bulb1.setSelected(true);
+                        bulb2.setSelected(true);
+                        renderer.render(board.grid);
+                        
+                        // Clear hint after a delay
+                        setTimeout(() => {
+                            bulb1.setSelected(false);
+                            bulb2.setSelected(false);
+                            renderer.render(board.grid);
+                        }, 1000);
+                    }
+                } else {
+                    alert('没有可用的移动！');
+                }
+            });
+            
+            document.getElementById('shuffle').addEventListener('click', () => {
+                board.shuffleBoard();
+                renderer.render(board.grid);
+            });
+            
+            // Animation loop
+            function gameLoop() {
+                // Update bulbs
+                let boardChanged = false;
+                for (let y = 0; y < board.gridSize.height; y++) {
+                    for (let x = 0; x < board.gridSize.width; x++) {
+                        const bulb = board.getBulbAt(x, y);
+                        if (bulb) {
+                            const changed = bulb.update(16); // Assume 60fps (16ms)
+                            boardChanged = boardChanged || changed;
+                        }
+                    }
+                }
+                
+                // Update renderer if board changed
+                if (boardChanged) {
+                    renderer.render(board.grid);
+                }
+                
+                requestAnimationFrame(gameLoop);
+            }
+            
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+            
+            // Start new game
+            function startNewGame() {
+                // Reset score manager
+                scoreManager.reset();
+                scoreManager.initializeLevel({
+                    moves: 30,
+                    timeLimit: null,
+                    scoreTarget: {
+                        oneStarScore: 1000,
+                        twoStarScore: 2000,
+                        threeStarScore: 3000
+                    },
+                    objectives: [
+                        { type: 'score', target: 1000 }
+                    ]
+                });
+                
+                // Reset board
+                board.resetGrid();
+                board.fillGrid(true);
+                
+                // Update displays
+                document.getElementById('score').textContent = '0';
+                document.getElementById('moves').textContent = '30';
+                
+                // Render board
+                renderer.render(board.grid);
+            }
+            
+            // Start initial game
+            startNewGame();
+        });
+    </script>
+</body>
+</html>

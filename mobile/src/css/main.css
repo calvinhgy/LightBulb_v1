@@ -1,0 +1,417 @@
+/* Main CSS for LightBulb Mobile */
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+}
+
+#game-container {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Loading Screen */
+#loading-screen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #121212;
+    z-index: 1000;
+}
+
+.loading-content {
+    text-align: center;
+    width: 80%;
+    max-width: 400px;
+}
+
+.loading-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.loading-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #333333;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.loading-progress {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff4d4d, #ffcc00, #33cc33, #3399ff);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.loading-text {
+    font-size: 1rem;
+    color: #cccccc;
+}
+
+/* Common Screen Styles */
+.screen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Main Menu */
+#main-menu {
+    background: radial-gradient(circle, #333333, #121212);
+}
+
+#main-menu h1 {
+    font-size: 3rem;
+    margin-bottom: 3rem;
+    color: #ffffff;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 80%;
+    max-width: 300px;
+}
+
+.menu-button {
+    padding: 1rem;
+    font-size: 1.2rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.menu-button:active {
+    transform: scale(0.95);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Level Select */
+#level-select {
+    background-color: #1a1a1a;
+    padding: 2rem 1rem;
+}
+
+#level-select h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+#levels-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.level-button {
+    aspect-ratio: 1/1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    font-size: 1.5rem;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.level-button.locked {
+    background-color: rgba(100, 100, 100, 0.1);
+    color: #666666;
+}
+
+.level-button:not(.locked):active {
+    transform: scale(0.95);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.level-stars {
+    display: flex;
+    margin-top: 0.5rem;
+}
+
+.level-star {
+    width: 15px;
+    height: 15px;
+    margin: 0 2px;
+    background-color: #666666;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.level-star.earned {
+    background-color: #ffcc00;
+}
+
+.back-button {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+/* Game Screen */
+#game-screen {
+    background-color: #121212;
+    justify-content: space-between;
+    padding: 1rem 0;
+}
+
+.game-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    margin-bottom: 1rem;
+}
+
+.score-container, .moves-container {
+    font-size: 1.2rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.icon-button {
+    width: 44px;
+    height: 44px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+#game-board-container {
+    position: relative;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.game-footer {
+    width: 100%;
+    padding: 1rem;
+}
+
+#powerups {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.powerup {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Overlay Screens */
+.overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.overlay-content {
+    background-color: #1a1a1a;
+    border-radius: 15px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.overlay-content h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Level Complete Screen */
+.stars-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0 2rem;
+}
+
+.star {
+    width: 50px;
+    height: 50px;
+    margin: 0 10px;
+    background-color: #666666;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    transition: background-color 0.5s ease;
+}
+
+.star.earned {
+    background-color: #ffcc00;
+}
+
+.level-stats {
+    margin-bottom: 2rem;
+}
+
+.level-stats p {
+    margin: 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+/* Settings Menu */
+.settings-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.settings-group h3 {
+    margin-bottom: 0.8rem;
+    font-size: 1.2rem;
+    color: #cccccc;
+}
+
+.setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.setting label {
+    flex: 1;
+}
+
+.setting input[type="range"] {
+    flex: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-height: 600px) {
+    #main-menu h1 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .menu-button {
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 350px) {
+    #levels-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Animation Classes */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s forwards;
+}
+
+/* Color Blind Mode */
+.colorblind-mode .bulb-red {
+    background-image: url('../assets/images/bulbs/bulb_red_cb.png');
+}
+
+.colorblind-mode .bulb-yellow {
+    background-image: url('../assets/images/bulbs/bulb_yellow_cb.png');
+}
+
+.colorblind-mode .bulb-blue {
+    background-image: url('../assets/images/bulbs/bulb_blue_cb.png');
+}
+
+.colorblind-mode .bulb-green {
+    background-image: url('../assets/images/bulbs/bulb_green_cb.png');
+}

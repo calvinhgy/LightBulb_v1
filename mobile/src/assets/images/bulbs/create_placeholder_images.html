@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Placeholder Images</title>
+    <style>
+        body { background: #222; color: white; font-family: sans-serif; }
+        .container { display: flex; flex-wrap: wrap; }
+        .image-container { margin: 10px; text-align: center; }
+        canvas { border: 1px solid #444; }
+    </style>
+</head>
+<body>
+    <h1>LightBulb Placeholder Images</h1>
+    <div class="container" id="images"></div>
+    
+    <script>
+        // Colors
+        const colors = {
+            red: '#ff0000',
+            yellow: '#ffcc00',
+            blue: '#0099ff',
+            green: '#00cc00'
+        };
+        
+        // Image types to create
+        const imageTypes = [
+            { name: 'regular', draw: drawRegularBulb },
+            { name: 'selected', draw: drawSelectedBulb },
+            { name: 'line', draw: drawLineBulb },
+            { name: 'bomb', draw: drawBombBulb }
+        ];
+        
+        // Create images
+        for (const color in colors) {
+            for (const type of imageTypes) {
+                createImage(color, type.name, type.draw);
+            }
+        }
+        
+        // Create rainbow bulb
+        createSpecialImage('rainbow', drawRainbowBulb);
+        
+        // Create background
+        createSpecialImage('background', drawBackground);
+        
+        // Create grid cell
+        createSpecialImage('grid_cell', drawGridCell);
+        
+        function createImage(color, type, drawFunction) {
+            const container = document.createElement('div');
+            container.className = 'image-container';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            
+            const ctx = canvas.getContext('2d');
+            drawFunction(ctx, colors[color]);
+            
+            const name = type === 'regular' ? `bulb_${color}` : `bulb_${color}_${type}`;
+            
+            const label = document.createElement('div');
+            label.textContent = name;
+            
+            container.appendChild(canvas);
+            container.appendChild(label);
+            
+            document.getElementById('images').appendChild(container);
+            
+            // Add download link
+            const link = document.createElement('a');
+            link.textContent = 'Download';
+            link.href = canvas.toDataURL('image/png');
+            link.download = `${name}.png`;
+            container.appendChild(link);
+        }
+        
+        function createSpecialImage(name, drawFunction) {
+            const container = document.createElement('div');
+            container.className = 'image-container';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            
+            const ctx = canvas.getContext('2d');
+            drawFunction(ctx);
+            
+            const label = document.createElement('div');
+            label.textContent = name;
+            
+            container.appendChild(canvas);
+            container.appendChild(label);
+            
+            document.getElementById('images').appendChild(container);
+            
+            // Add download link
+            const link = document.createElement('a');
+            link.textContent = 'Download';
+            link.href = canvas.toDataURL('image/png');
+            link.download = `${name}.png`;
+            container.appendChild(link);
+        }
+        
+        function drawRegularBulb(ctx, color) {
+            // Clear canvas
+            ctx.clearRect(0, 0, 128, 128);
+            
+            // Draw bulb
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(64, 64, 48, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(48, 48, 16, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw glow
+            const gradient = ctx.createRadialGradient(64, 64, 48, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.3)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawSelectedBulb(ctx, color) {
+            // Draw regular bulb
+            drawRegularBulb(ctx, color);
+            
+            // Add selection glow
+            const gradient = ctx.createRadialGradient(64, 64, 48, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw selection ring
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(64, 64, 56, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        function drawLineBulb(ctx, color) {
+            // Draw regular bulb
+            drawRegularBulb(ctx, color);
+            
+            // Draw line symbol
+            ctx.fillStyle = 'white';
+            ctx.fillRect(32, 60, 64, 8);
+            
+            // Draw perpendicular line
+            ctx.fillRect(60, 32, 8, 64);
+        }
+        
+        function drawBombBulb(ctx, color) {
+            // Draw regular bulb
+            drawRegularBulb(ctx, color);
+            
+            // Draw bomb symbol
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(64, 64, 24, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw fuse
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(64, 40);
+            ctx.quadraticCurveTo(80, 30, 90, 40);
+            ctx.stroke();
+            
+            // Draw spark
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.arc(90, 40, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawRainbowBulb(ctx) {
+            // Clear canvas
+            ctx.clearRect(0, 0, 128, 128);
+            
+            // Create rainbow gradient
+            const gradient = ctx.createLinearGradient(16, 16, 112, 112);
+            gradient.addColorStop(0, 'red');
+            gradient.addColorStop(0.2, 'orange');
+            gradient.addColorStop(0.4, 'yellow');
+            gradient.addColorStop(0.6, 'green');
+            gradient.addColorStop(0.8, 'blue');
+            gradient.addColorStop(1, 'purple');
+            
+            // Draw bulb
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(64, 64, 48, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(48, 48, 16, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw glow
+            const glowGradient = ctx.createRadialGradient(64, 64, 48, 64, 64, 64);
+            glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0.3)');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw star symbol
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            drawStar(ctx, 64, 64, 5, 24, 12);
+            ctx.fill();
+        }
+        
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+        }
+        
+        function drawBackground(ctx) {
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+            gradient.addColorStop(0, '#000000');
+            gradient.addColorStop(1, '#1a1a3a');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+            
+            // Add some subtle stars
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * 128;
+                const y = Math.random() * 128;
+                const size = Math.random() * 2 + 1;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function drawGridCell(ctx) {
+            // Clear canvas
+            ctx.clearRect(0, 0, 128, 128);
+            
+            // Draw cell background
+            ctx.fillStyle = '#222222';
+            ctx.fillRect(1, 1, 126, 126);
+            
+            // Draw cell border
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, 126, 126);
+            
+            // Add subtle inner shadow
+            const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(2, 2, 124, 124);
+        }
+    </script>
+</body>
+</html>

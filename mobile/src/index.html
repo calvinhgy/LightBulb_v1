@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>五彩灯泡 Mobile</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- 预加载音频资源 -->
+    <link rel="preload" href="assets/sounds/select.mp3" as="audio">
+    <link rel="preload" href="assets/sounds/swap.mp3" as="audio">
+    <link rel="preload" href="assets/sounds/match.mp3" as="audio">
+    <link rel="preload" href="assets/sounds/invalid.mp3" as="audio">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 加载屏幕 -->
+        <div id="loading-screen">
+            <div class="loading-content">
+                <h1>五彩灯泡</h1>
+                <div class="loading-spinner"></div>
+                <p>加载中...</p>
+            </div>
+        </div>
+
+        <!-- 主菜单 -->
+        <div id="main-menu" class="screen hidden">
+            <div class="menu-content">
+                <h1>五彩灯泡</h1>
+                <div class="menu-buttons">
+                    <button id="play-button" class="primary-button">开始游戏</button>
+                    <button id="levels-button" class="primary-button">选择关卡</button>
+                    <button id="settings-button" class="secondary-button">设置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 关卡选择 -->
+        <div id="level-select" class="screen hidden">
+            <div class="screen-header">
+                <button id="back-to-menu" class="back-button">返回</button>
+                <h2>选择关卡</h2>
+            </div>
+            <div class="levels-grid" id="levels-grid">
+                <!-- 关卡按钮将通过JS动态生成 -->
+            </div>
+        </div>
+
+        <!-- 游戏屏幕 -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="level-info">
+                    <span id="level-number">关卡 1</span>
+                    <div class="objective" id="level-objective">目标: 获得 1000 分</div>
+                </div>
+                <div class="game-stats">
+                    <div class="score-container">
+                        <span class="label">分数:</span>
+                        <span id="score">0</span>
+                    </div>
+                    <div class="moves-container">
+                        <span class="label">剩余步数:</span>
+                        <span id="moves">15</span>
+                    </div>
+                </div>
+                <button id="pause-button" class="icon-button">暂停</button>
+            </div>
+            
+            <div id="game-board-container">
+                <canvas id="game-board"></canvas>
+            </div>
+            
+            <div class="game-footer">
+                <div class="power-ups">
+                    <button id="shuffle-button" class="power-up-button" disabled>洗牌</button>
+                    <button id="hint-button" class="power-up-button">提示</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 暂停菜单 -->
+        <div id="pause-menu" class="overlay hidden">
+            <div class="dialog">
+                <h2>游戏暂停</h2>
+                <div class="dialog-buttons">
+                    <button id="resume-button" class="primary-button">继续游戏</button>
+                    <button id="restart-button" class="secondary-button">重新开始</button>
+                    <button id="exit-button" class="secondary-button">退出关卡</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 关卡完成 -->
+        <div id="level-complete" class="overlay hidden">
+            <div class="dialog">
+                <h2>关卡完成!</h2>
+                <div class="level-results">
+                    <div class="stars-container">
+                        <div class="star" id="star1"></div>
+                        <div class="star" id="star2"></div>
+                        <div class="star" id="star3"></div>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">分数:</span>
+                        <span id="final-score">0</span>
+                    </div>
+                </div>
+                <div class="dialog-buttons">
+                    <button id="next-level-button" class="primary-button">下一关</button>
+                    <button id="replay-level-button" class="secondary-button">重玩</button>
+                    <button id="levels-menu-button" class="secondary-button">关卡菜单</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 关卡失败 -->
+        <div id="level-failed" class="overlay hidden">
+            <div class="dialog">
+                <h2>关卡失败</h2>
+                <p>再试一次吧!</p>
+                <div class="dialog-buttons">
+                    <button id="retry-button" class="primary-button">重试</button>
+                    <button id="failed-levels-button" class="secondary-button">关卡菜单</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设置菜单 -->
+        <div id="settings-screen" class="screen hidden">
+            <div class="screen-header">
+                <button id="back-from-settings" class="back-button">返回</button>
+                <h2>设置</h2>
+            </div>
+            <div class="settings-content">
+                <div class="setting-group">
+                    <h3>音频</h3>
+                    <div class="setting-item">
+                        <label for="music-volume">音乐音量</label>
+                        <input type="range" id="music-volume" min="0" max="100" value="70">
+                    </div>
+                    <div class="setting-item">
+                        <label for="sfx-volume">音效音量</label>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="80">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>辅助功能</h3>
+                    <div class="setting-item">
+                        <label for="colorblind-mode">色盲模式</label>
+                        <input type="checkbox" id="colorblind-mode">
+                    </div>
+                    <div class="setting-item">
+                        <label for="reduced-motion">减少动画</label>
+                        <input type="checkbox" id="reduced-motion">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>控制</h3>
+                    <div class="setting-item">
+                        <label for="control-scheme">控制方式</label>
+                        <select id="control-scheme">
+                            <option value="swipe">滑动</option>
+                            <option value="tap">点击</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本加载 -->
+    <script src="js/utils.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
