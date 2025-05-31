@@ -507,20 +507,44 @@ class Game {
      * @param {MouseEvent} event - Mouse event
      */
     handleMouseMove(event) {
-        if (!this.isDragging || this.state !== 'playing') return;
+        if (!this.isDragging || this.state !== 'playing' || !this.dragStartBulb) return;
         
         // Get current position relative to canvas
         const rect = this.canvas.getBoundingClientRect();
         const x = event.clientX - rect.left - this.boardOffsetX;
         const y = event.clientY - rect.top - this.boardOffsetY;
         
-        // Check if we've moved to an adjacent bulb
-        const currentBulb = this.board.getBulbAtCoordinates(x, y);
-        if (currentBulb && currentBulb !== this.dragStartBulb) {
-            // Check if the bulbs are adjacent
-            if (Utils.areAdjacent(this.dragStartBulb, currentBulb)) {
+        // Calculate drag direction (only allow 4 directions: up, down, left, right)
+        const startX = this.dragStartBulb.col * this.bulbSize + this.bulbSize / 2;
+        const startY = this.dragStartBulb.row * this.bulbSize + this.bulbSize / 2;
+        
+        const deltaX = x - startX;
+        const deltaY = y - startY;
+        
+        // Determine the dominant direction
+        let targetRow = this.dragStartBulb.row;
+        let targetCol = this.dragStartBulb.col;
+        
+        // Only allow movement if drag distance is significant
+        const minDragDistance = this.bulbSize * 0.3;
+        
+        if (Math.abs(deltaX) > minDragDistance || Math.abs(deltaY) > minDragDistance) {
+            // Determine which direction has the larger movement
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal movement
+                targetCol += (deltaX > 0) ? 1 : -1;
+            } else {
+                // Vertical movement
+                targetRow += (deltaY > 0) ? 1 : -1;
+            }
+            
+            // Get the target bulb
+            const targetBulb = this.board.getBulb(targetRow, targetCol);
+            
+            // If we have a valid target bulb that's different from the start bulb
+            if (targetBulb && targetBulb !== this.dragStartBulb) {
                 // Swap bulbs
-                this.board.swapBulbs(this.dragStartBulb, currentBulb);
+                this.board.swapBulbs(this.dragStartBulb, targetBulb);
                 
                 // Play swap sound
                 if (typeof Sound !== 'undefined') {
@@ -575,23 +599,51 @@ class Game {
      */
     handleTouchMove(event) {
         event.preventDefault();
-        if (!this.isDragging || this.state !== 'playing') return;
+        if (!this.isDragging || this.state !== 'playing' || !this.dragStartBulb) return;
         
         const touch = event.touches[0];
         const rect = this.canvas.getBoundingClientRect();
         const x = touch.clientX - rect.left - this.boardOffsetX;
         const y = touch.clientY - rect.top - this.boardOffsetY;
         
-        const currentBulb = this.board.getBulbAtCoordinates(x, y);
-        if (currentBulb && currentBulb !== this.dragStartBulb) {
-            if (Utils.areAdjacent(this.dragStartBulb, currentBulb)) {
-                this.board.swapBulbs(this.dragStartBulb, currentBulb);
+        // Calculate drag direction (only allow 4 directions: up, down, left, right)
+        const startX = this.dragStartBulb.col * this.bulbSize + this.bulbSize / 2;
+        const startY = this.dragStartBulb.row * this.bulbSize + this.bulbSize / 2;
+        
+        const deltaX = x - startX;
+        const deltaY = y - startY;
+        
+        // Determine the dominant direction
+        let targetRow = this.dragStartBulb.row;
+        let targetCol = this.dragStartBulb.col;
+        
+        // Only allow movement if drag distance is significant
+        const minDragDistance = this.bulbSize * 0.3;
+        
+        if (Math.abs(deltaX) > minDragDistance || Math.abs(deltaY) > minDragDistance) {
+            // Determine which direction has the larger movement
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal movement
+                targetCol += (deltaX > 0) ? 1 : -1;
+            } else {
+                // Vertical movement
+                targetRow += (deltaY > 0) ? 1 : -1;
+            }
+            
+            // Get the target bulb
+            const targetBulb = this.board.getBulb(targetRow, targetCol);
+            
+            // If we have a valid target bulb that's different from the start bulb
+            if (targetBulb && targetBulb !== this.dragStartBulb) {
+                // Swap bulbs
+                this.board.swapBulbs(this.dragStartBulb, targetBulb);
                 
                 // Play swap sound
                 if (typeof Sound !== 'undefined') {
                     Sound.play('swap');
                 }
                 
+                // End dragging
                 this.isDragging = false;
                 this.dragStartBulb = null;
             }

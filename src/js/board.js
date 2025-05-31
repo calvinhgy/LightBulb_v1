@@ -169,6 +169,12 @@ class Board {
             return;
         }
         
+        // Verify bulbs are adjacent
+        if (!Utils.areAdjacent(bulb1, bulb2)) {
+            console.log('Cannot swap non-adjacent bulbs');
+            return;
+        }
+        
         this.isSwapping = true;
         
         // Set up animation properties for visual swap
@@ -236,6 +242,19 @@ class Board {
                 bulb2.x = bulb2.targetX;
                 bulb2.y = bulb2.targetY;
                 
+                // Update row and col properties to match new positions
+                const tempRow = bulb1.row;
+                const tempCol = bulb1.col;
+                
+                bulb1.row = bulb2.row;
+                bulb1.col = bulb2.col;
+                bulb2.row = tempRow;
+                bulb2.col = tempCol;
+                
+                // Update grid references
+                this.grid[bulb1.row][bulb1.col] = bulb1;
+                this.grid[bulb2.row][bulb2.col] = bulb2;
+                
                 bulb1.isSwapping = false;
                 bulb2.isSwapping = false;
                 
@@ -254,6 +273,19 @@ class Board {
                     const tempType = bulb1.type;
                     bulb1.type = bulb2.type;
                     bulb2.type = tempType;
+                    
+                    // Swap positions back
+                    const tempRow2 = bulb1.row;
+                    const tempCol2 = bulb1.col;
+                    
+                    bulb1.row = bulb2.row;
+                    bulb1.col = bulb2.col;
+                    bulb2.row = tempRow2;
+                    bulb2.col = tempCol2;
+                    
+                    // Update grid references again
+                    this.grid[bulb1.row][bulb1.col] = bulb1;
+                    this.grid[bulb2.row][bulb2.col] = bulb2;
                     
                     // Animate the swap back
                     bulb1.sourceX = bulb1.x;
@@ -317,6 +349,19 @@ class Board {
                 bulb1.y = bulb1.targetY;
                 bulb2.x = bulb2.targetX;
                 bulb2.y = bulb2.targetY;
+                
+                // Update row and col properties to match original positions
+                const tempRow = bulb1.row;
+                const tempCol = bulb1.col;
+                
+                bulb1.row = bulb2.row;
+                bulb1.col = bulb2.col;
+                bulb2.row = tempRow;
+                bulb2.col = tempCol;
+                
+                // Update grid references
+                this.grid[bulb1.row][bulb1.col] = bulb1;
+                this.grid[bulb2.row][bulb2.col] = bulb2;
                 
                 bulb1.isSwapping = false;
                 bulb2.isSwapping = false;
