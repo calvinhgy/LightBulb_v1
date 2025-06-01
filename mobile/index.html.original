@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>五彩灯泡 Mobile</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <!-- Preload critical assets -->
+    <link rel="preload" href="src/assets/images/bulbs/bulb_red.png" as="image">
+    <link rel="preload" href="src/assets/images/bulbs/bulb_yellow.png" as="image">
+    <link rel="preload" href="src/assets/images/bulbs/bulb_blue.png" as="image">
+    <link rel="preload" href="src/assets/images/bulbs/bulb_green.png" as="image">
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading-screen">
+            <div class="loading-content">
+                <h1>五彩灯泡</h1>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <p class="loading-text">加载中...</p>
+            </div>
+        </div>
+        
+        <div id="main-menu" class="screen hidden">
+            <h1>五彩灯泡</h1>
+            <div class="menu-buttons">
+                <button id="continue-game" class="menu-button">继续游戏</button>
+                <button id="new-game" class="menu-button">新游戏</button>
+                <button id="settings" class="menu-button">设置</button>
+                <button id="tutorial" class="menu-button">教程</button>
+            </div>
+        </div>
+        
+        <div id="level-select" class="screen hidden">
+            <h2>选择关卡</h2>
+            <div id="levels-grid"></div>
+            <button id="back-to-menu" class="back-button">返回</button>
+        </div>
+        
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="score-container">
+                    <span>分数:</span>
+                    <span id="score">0</span>
+                </div>
+                <div class="moves-container">
+                    <span>剩余步数:</span>
+                    <span id="moves">30</span>
+                </div>
+                <button id="pause-button" class="icon-button">暂停</button>
+            </div>
+            
+            <div id="game-board-container">
+                <canvas id="game-background"></canvas>
+                <canvas id="game-board"></canvas>
+                <canvas id="game-effects"></canvas>
+            </div>
+            
+            <div class="game-footer">
+                <div id="powerups">
+                    <!-- Powerups will be added here -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="pause-menu" class="overlay hidden">
+            <div class="overlay-content">
+                <h2>游戏暂停</h2>
+                <button id="resume" class="menu-button">继续</button>
+                <button id="restart" class="menu-button">重新开始</button>
+                <button id="exit-to-menu" class="menu-button">退出到菜单</button>
+            </div>
+        </div>
+        
+        <div id="level-complete" class="overlay hidden">
+            <div class="overlay-content">
+                <h2>关卡完成!</h2>
+                <div class="stars-container">
+                    <div class="star" id="star1"></div>
+                    <div class="star" id="star2"></div>
+                    <div class="star" id="star3"></div>
+                </div>
+                <div class="level-stats">
+                    <p>分数: <span id="final-score">0</span></p>
+                    <p>剩余步数: <span id="remaining-moves">0</span></p>
+                </div>
+                <button id="next-level" class="menu-button">下一关</button>
+                <button id="replay-level" class="menu-button">重玩</button>
+                <button id="level-exit" class="menu-button">退出</button>
+            </div>
+        </div>
+        
+        <div id="settings-menu" class="overlay hidden">
+            <div class="overlay-content">
+                <h2>设置</h2>
+                <div class="settings-group">
+                    <h3>音频</h3>
+                    <div class="setting">
+                        <label for="music-volume">音乐音量</label>
+                        <input type="range" id="music-volume" min="0" max="100" value="70">
+                    </div>
+                    <div class="setting">
+                        <label for="sfx-volume">音效音量</label>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="80">
+                    </div>
+                    <div class="setting">
+                        <label for="vibration">振动</label>
+                        <input type="checkbox" id="vibration" checked>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>控制</h3>
+                    <div class="setting">
+                        <label for="control-scheme">控制方式</label>
+                        <select id="control-scheme">
+                            <option value="swipe">滑动</option>
+                            <option value="tap">点击</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>无障碍</h3>
+                    <div class="setting">
+                        <label for="colorblind-mode">色盲模式</label>
+                        <input type="checkbox" id="colorblind-mode">
+                    </div>
+                    <div class="setting">
+                        <label for="reduced-motion">减少动画</label>
+                        <input type="checkbox" id="reduced-motion">
+                    </div>
+                </div>
+                <button id="settings-close" class="menu-button">保存并关闭</button>
+            </div>
+        </div>
+        
+        <div id="tutorial" class="overlay hidden">
+            <!-- Tutorial content will be added dynamically -->
+        </div>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- Core Game Scripts -->
+    <script src="src/js/utils/DeviceDetector.js"></script>
+    <script src="src/js/utils/Preloader.js"></script>
+    <script src="src/js/data/ConfigManager.js"></script>
+    <script src="src/js/data/StorageManager.js"></script>
+    <script src="src/js/data/PlayerData.js"></script>
+    <script src="src/js/data/LevelManager.js"></script>
+    <script src="src/js/core/LightBulb.js"></script>
+    <script src="src/js/core/Board.js"></script>
+    <script src="src/js/core/MatchDetector.js"></script>
+    <script src="src/js/core/ScoreManager.js"></script>
+    <script src="src/js/ui/Renderer.js"></script>
+    <script src="src/js/ui/AnimationManager.js"></script>
+    <script src="src/js/ui/TouchController.js"></script>
+    <script src="src/js/ui/SoundManager.js"></script>
+    <script src="src/js/ui/UIComponents.js"></script>
+    <script src="src/js/core/Game.js"></script>
+    <script src="src/js/main.js"></script>
+</body>
+</html>

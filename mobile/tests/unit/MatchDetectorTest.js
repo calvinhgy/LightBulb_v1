@@ -155,5 +155,5 @@ function testMatchDetector() {
     console.log('MatchDetector tests completed');
 }
 
-// Run tests
-testMatchDetector();
+// Make the test function globally available
+window.testMatchDetector = testMatchDetector;

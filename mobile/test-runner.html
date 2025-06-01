@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五彩灯泡 Mobile Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #test-results {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            color: green;
+        }
+        .failure {
+            color: red;
+        }
+        .button {
+            display: block;
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 20px auto;
+            width: 200px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>五彩灯泡 Mobile Tests</h1>
+    <div id="test-results">Running tests...</div>
+    <button id="runTests" class="button">Run Tests Again</button>
+
+    <!-- Include core game classes -->
+    <script src="src/js/core/LightBulb.js"></script>
+    <script src="src/js/core/MatchDetector.js"></script>
+    
+    <!-- Include test files -->
+    <script src="tests/unit/LightBulbTest.js"></script>
+    <script src="tests/unit/MatchDetectorTest.js"></script>
+    
+    <script>
+        // Capture console output
+        const testResults = document.getElementById('test-results');
+        const runTestsButton = document.getElementById('runTests');
+        
+        function clearResults() {
+            testResults.innerHTML = '';
+        }
+        
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function(message) {
+            originalConsoleLog.apply(console, arguments);
+            const line = document.createElement('div');
+            line.textContent = message;
+            if (message.includes('✅')) {
+                line.className = 'success';
+            }
+            testResults.appendChild(line);
+        };
+        
+        console.error = function(message) {
+            originalConsoleError.apply(console, arguments);
+            const line = document.createElement('div');
+            line.textContent = message;
+            line.className = 'failure';
+            testResults.appendChild(line);
+        };
+        
+        // Define the test functions if they're not already defined
+        if (typeof testLightBulb !== 'function') {
+            window.testLightBulb = function() {
+                console.error("LightBulb test function not properly loaded");
+            };
+        }
+        
+        if (typeof testMatchDetector !== 'function') {
+            // Define MockLightBulb class if needed
+            if (typeof MockLightBulb === 'undefined') {
+                window.MockLightBulb = class MockLightBulb {
+                    constructor(color, id) {
+                        this.color = color;
+                        this.id = id || Math.floor(Math.random() * 10000);
+                    }
+                };
+            }
+            
+            window.testMatchDetector = function() {
+                console.log('Running MatchDetector tests...');
+                
+                // Test constructor
+                const detector = new MatchDetector(3);
+                assert.equal(detector.minMatchLength, 3, 'Detector should have correct minimum match length');
+                
+                // Create a test grid
+                const gridSize = { width: 5, height: 5 };
+                const grid = [];
+                
+                // Initialize empty grid
+                for (let y = 0; y < gridSize.height; y++) {
+                    grid[y] = [];
+                    for (let x = 0; x < gridSize.width; x++) {
+                        grid[y][x] = null;
+                    }
+                }
+                
+                // Test with no matches
+                let matches = detector.findMatches(grid, gridSize);
+                assert.equal(matches.length, 0, 'Empty grid should have no matches');
+                
+                // Add some bulbs without matches
+                grid[0][0] = new MockLightBulb('red', 1);
+                grid[0][1] = new MockLightBulb('blue', 2);
+                grid[0][2] = new MockLightBulb('green', 3);
+                grid[1][0] = new MockLightBulb('yellow', 4);
+                grid[1][1] = new MockLightBulb('red', 5);
+                
+                matches = detector.findMatches(grid, gridSize);
+                assert.equal(matches.length, 0, 'Grid without matches should return empty array');
+                
+                // Add horizontal match
+                grid[2][0] = new MockLightBulb('green', 6);
+                grid[2][1] = new MockLightBulb('green', 7);
+                grid[2][2] = new MockLightBulb('green', 8);
+                
+                matches = detector.findMatches(grid, gridSize);
+                assert.equal(matches.length, 1, 'Should find one match');
+                assert.equal(matches[0].length, 3, 'Match should contain 3 bulbs');
+                assert.equal(matches[0][0].color, 'green', 'Match should contain green bulbs');
+                
+                console.log('MatchDetector tests completed');
+            };
+        }
+        
+        // Run tests function
+        function runTests() {
+            clearResults();
+            try {
+                console.log("Starting tests...");
+                testLightBulb();
+                testMatchDetector();
+                console.log('All tests completed!');
+            } catch (error) {
+                console.error('Test execution failed: ' + error.message);
+                console.error(error.stack);
+            }
+        }
+        
+        // Run tests on page load
+        runTests();
+        
+        // Add event listener for the button
+        runTestsButton.addEventListener('click', runTests);
+    </script>
+</body>
+</html>

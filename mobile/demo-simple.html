@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>五彩灯泡 Mobile Demo (简化版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        #game-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-container, .moves-container {
+            font-size: 1.2rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        #game-board-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        button:active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="game-header">
+            <div class="score-container">
+                <span>分数:</span>
+                <span id="score">0</span>
+            </div>
+            <div class="moves-container">
+                <span>剩余步数:</span>
+                <span id="moves">30</span>
+            </div>
+        </div>
+        
+        <div id="game-board-container">
+            <canvas id="game-canvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="new-game">新游戏</button>
+            <button id="hint">提示</button>
+            <button id="shuffle">重排</button>
+        </div>
+    </div>
+
+    <script>
+        // 简化版五彩灯泡游戏
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取画布和上下文
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布大小
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                
+                // 重新绘制游戏
+                if (game.initialized) {
+                    drawGame();
+                }
+            }
+            
+            // 监听窗口大小变化
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // 游戏配置
+            const config = {
+                gridWidth: 8,
+                gridHeight: 10,
+                colors: ['red', 'yellow', 'blue', 'green'],
+                maxMoves: 30
+            };
+            
+            // 游戏状态
+            const game = {
+                grid: [],
+                score: 0,
+                moves: config.maxMoves,
+                selectedBulb: null,
+                initialized: false,
+                cellSize: 0,
+                gridOffset: { x: 0, y: 0 }
+            };
+            
+            // 计算网格尺寸和位置
+            function calculateGridDimensions() {
+                const width = canvas.width;
+                const height = canvas.height;
+                
+                // 计算单元格大小，使网格适合画布（使用90%的可用空间）
+                const maxCellWidth = Math.floor(width * 0.9 / config.gridWidth);
+                const maxCellHeight = Math.floor(height * 0.9 / config.gridHeight);
+                
+                // 使用较小的尺寸确保单元格是正方形
+                game.cellSize = Math.min(maxCellWidth, maxCellHeight);
+                
+                // 计算网格偏移量以使网格居中
+                const gridWidth = game.cellSize * config.gridWidth;
+                const gridHeight = game.cellSize * config.gridHeight;
+                
+                game.gridOffset = {
+                    x: Math.floor((width - gridWidth) / 2),
+                    y: Math.floor((height - gridHeight) / 2)
+                };
+            }
+            
+            // 初始化游戏
+            function initGame() {
+                // 重置游戏状态
+                game.grid = [];
+                game.score = 0;
+                game.moves = config.maxMoves;
+                game.selectedBulb = null;
+                
+                // 计算网格尺寸
+                calculateGridDimensions();
+                
+                // 创建网格
+                for (let y = 0; y < config.gridHeight; y++) {
+                    game.grid[y] = [];
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        // 随机选择一个颜色
+                        const colorIndex = Math.floor(Math.random() * config.colors.length);
+                        const color = config.colors[colorIndex];
+                        
+                        // 创建灯泡
+                        game.grid[y][x] = {
+                            color: color,
+                            x: x,
+                            y: y,
+                            selected: false,
+                            matched: false,
+                            alpha: 1,
+                            scale: 1
+                        };
+                    }
+                }
+                
+                // 更新分数和步数显示
+                document.getElementById('score').textContent = game.score;
+                document.getElementById('moves').textContent = game.moves;
+                
+                game.initialized = true;
+                
+                // 绘制游戏
+                drawGame();
+            }
+            
+            // 绘制游戏
+            function drawGame() {
+                // 清除画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制背景
+                drawBackground();
+                
+                // 绘制网格
+                drawGrid();
+                
+                // 绘制灯泡
+                drawBulbs();
+            }
+            
+            // 绘制背景
+            function drawBackground() {
+                ctx.fillStyle = '#121212';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制网格背景
+                const gridWidth = game.cellSize * config.gridWidth;
+                const gridHeight = game.cellSize * config.gridHeight;
+                
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(
+                    game.gridOffset.x - 10,
+                    game.gridOffset.y - 10,
+                    gridWidth + 20,
+                    gridHeight + 20
+                );
+            }
+            
+            // 绘制网格
+            function drawGrid() {
+                for (let y = 0; y < config.gridHeight; y++) {
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        const cellX = game.gridOffset.x + x * game.cellSize;
+                        const cellY = game.gridOffset.y + y * game.cellSize;
+                        
+                        // 绘制单元格背景
+                        ctx.fillStyle = '#222222';
+                        ctx.fillRect(
+                            cellX + 1,
+                            cellY + 1,
+                            game.cellSize - 2,
+                            game.cellSize - 2
+                        );
+                        
+                        // 绘制单元格边框
+                        ctx.strokeStyle = '#333333';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(
+                            cellX + 0.5,
+                            cellY + 0.5,
+                            game.cellSize - 1,
+                            game.cellSize - 1
+                        );
+                    }
+                }
+            }
+            
+            // 绘制灯泡
+            function drawBulbs() {
+                for (let y = 0; y < config.gridHeight; y++) {
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        const bulb = game.grid[y][x];
+                        if (bulb) {
+                            drawBulb(bulb);
+                        }
+                    }
+                }
+            }
+            
+            // 绘制单个灯泡
+            function drawBulb(bulb) {
+                // 计算灯泡位置
+                const cellX = game.gridOffset.x + bulb.x * game.cellSize;
+                const cellY = game.gridOffset.y + bulb.y * game.cellSize;
+                const centerX = cellX + game.cellSize / 2;
+                const centerY = cellY + game.cellSize / 2;
+                
+                // 如果灯泡不可见，则不绘制
+                if (bulb.alpha <= 0) {
+                    return;
+                }
+                
+                // 保存上下文状态
+                ctx.save();
+                
+                // 应用变换
+                ctx.translate(centerX, centerY);
+                ctx.scale(bulb.scale, bulb.scale);
+                ctx.globalAlpha = bulb.alpha;
+                
+                // 设置灯泡颜色
+                let bulbColor;
+                switch (bulb.color) {
+                    case 'red': bulbColor = '#ff0000'; break;
+                    case 'yellow': bulbColor = '#ffcc00'; break;
+                    case 'blue': bulbColor = '#0099ff'; break;
+                    case 'green': bulbColor = '#00cc00'; break;
+                    default: bulbColor = '#ffffff';
+                }
+                
+                // 绘制灯泡圆形
+                const size = game.cellSize * 0.8; // 略小于单元格
+                ctx.fillStyle = bulbColor;
+                ctx.beginPath();
+                ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制高光
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(-size / 6, -size / 6, size / 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 如果灯泡被选中，绘制选中效果
+                if (bulb.selected) {
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size / 2 + 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // 添加发光效果
+                    const gradient = ctx.createRadialGradient(0, 0, size / 2, 0, 0, size / 2 + 10);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+                    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size / 2 + 10, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // 恢复上下文状态
+                ctx.restore();
+            }
+            
+            // 处理点击事件
+            canvas.addEventListener('click', function(event) {
+                if (!game.initialized) return;
+                
+                // 获取点击位置
+                const rect = canvas.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                const clickY = event.clientY - rect.top;
+                
+                // 转换为网格坐标
+                const gridPos = screenToGridCoordinates(clickX, clickY);
+                if (!gridPos) return;
+                
+                // 获取点击的灯泡
+                const bulb = game.grid[gridPos.y][gridPos.x];
+                if (!bulb) return;
+                
+                // 如果已经有选中的灯泡，尝试交换
+                if (game.selectedBulb) {
+                    // 检查是否相邻
+                    const dx = Math.abs(bulb.x - game.selectedBulb.x);
+                    const dy = Math.abs(bulb.y - game.selectedBulb.y);
+                    
+                    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        // 相邻，可以交换
+                        swapBulbs(game.selectedBulb, bulb);
+                        
+                        // 使用一步
+                        game.moves--;
+                        document.getElementById('moves').textContent = game.moves;
+                        
+                        // 检查游戏结束
+                        if (game.moves <= 0) {
+                            setTimeout(function() {
+                                alert(`游戏结束！\n分数: ${game.score}`);
+                                initGame();
+                            }, 500);
+                        }
+                    } else {
+                        // 不相邻，取消选择并选择新的灯泡
+                        game.selectedBulb.selected = false;
+                        bulb.selected = true;
+                        game.selectedBulb = bulb;
+                    }
+                } else {
+                    // 选择灯泡
+                    bulb.selected = true;
+                    game.selectedBulb = bulb;
+                }
+                
+                // 重绘游戏
+                drawGame();
+            });
+            
+            // 交换两个灯泡
+            function swapBulbs(bulb1, bulb2) {
+                // 交换颜色
+                const tempColor = bulb1.color;
+                bulb1.color = bulb2.color;
+                bulb2.color = tempColor;
+                
+                // 取消选择
+                bulb1.selected = false;
+                bulb2.selected = false;
+                game.selectedBulb = null;
+                
+                // 检查匹配
+                checkMatches();
+            }
+            
+            // 检查匹配
+            function checkMatches() {
+                // 标记所有匹配的灯泡
+                const matches = findMatches();
+                
+                if (matches.length > 0) {
+                    // 有匹配，更新分数
+                    const matchCount = matches.reduce((count, match) => count + match.length, 0);
+                    game.score += matchCount * 100;
+                    document.getElementById('score').textContent = game.score;
+                    
+                    // 标记匹配的灯泡
+                    for (const match of matches) {
+                        for (const bulb of match) {
+                            bulb.matched = true;
+                        }
+                    }
+                    
+                    // 重绘游戏
+                    drawGame();
+                    
+                    // 延迟后移除匹配的灯泡并填充新的
+                    setTimeout(function() {
+                        removeMatches();
+                        fillGrid();
+                        drawGame();
+                        
+                        // 检查是否有新的匹配
+                        setTimeout(function() {
+                            checkMatches();
+                        }, 300);
+                    }, 500);
+                }
+            }
+            
+            // 查找匹配
+            function findMatches() {
+                const matches = [];
+                const minMatchLength = 3;
+                
+                // 检查水平匹配
+                for (let y = 0; y < config.gridHeight; y++) {
+                    let currentMatch = [];
+                    let currentColor = null;
+                    
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        const bulb = game.grid[y][x];
+                        
+                        if (bulb && bulb.color === currentColor) {
+                            currentMatch.push(bulb);
+                        } else {
+                            if (currentMatch.length >= minMatchLength) {
+                                matches.push(currentMatch);
+                            }
+                            
+                            currentMatch = bulb ? [bulb] : [];
+                            currentColor = bulb ? bulb.color : null;
+                        }
+                    }
+                    
+                    if (currentMatch.length >= minMatchLength) {
+                        matches.push(currentMatch);
+                    }
+                }
+                
+                // 检查垂直匹配
+                for (let x = 0; x < config.gridWidth; x++) {
+                    let currentMatch = [];
+                    let currentColor = null;
+                    
+                    for (let y = 0; y < config.gridHeight; y++) {
+                        const bulb = game.grid[y][x];
+                        
+                        if (bulb && bulb.color === currentColor) {
+                            currentMatch.push(bulb);
+                        } else {
+                            if (currentMatch.length >= minMatchLength) {
+                                matches.push(currentMatch);
+                            }
+                            
+                            currentMatch = bulb ? [bulb] : [];
+                            currentColor = bulb ? bulb.color : null;
+                        }
+                    }
+                    
+                    if (currentMatch.length >= minMatchLength) {
+                        matches.push(currentMatch);
+                    }
+                }
+                
+                return matches;
+            }
+            
+            // 移除匹配的灯泡
+            function removeMatches() {
+                for (let y = 0; y < config.gridHeight; y++) {
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        const bulb = game.grid[y][x];
+                        if (bulb && bulb.matched) {
+                            game.grid[y][x] = null;
+                        }
+                    }
+                }
+            }
+            
+            // 填充网格
+            function fillGrid() {
+                // 让现有灯泡下落
+                for (let x = 0; x < config.gridWidth; x++) {
+                    let emptyY = config.gridHeight - 1;
+                    
+                    // 从底部向上移动灯泡
+                    for (let y = config.gridHeight - 1; y >= 0; y--) {
+                        if (game.grid[y][x]) {
+                            if (y !== emptyY) {
+                                game.grid[emptyY][x] = game.grid[y][x];
+                                game.grid[emptyY][x].y = emptyY;
+                                game.grid[y][x] = null;
+                            }
+                            emptyY--;
+                        }
+                    }
+                    
+                    // 在顶部添加新的灯泡
+                    for (let y = emptyY; y >= 0; y--) {
+                        const colorIndex = Math.floor(Math.random() * config.colors.length);
+                        const color = config.colors[colorIndex];
+                        
+                        game.grid[y][x] = {
+                            color: color,
+                            x: x,
+                            y: y,
+                            selected: false,
+                            matched: false,
+                            alpha: 1,
+                            scale: 1
+                        };
+                    }
+                }
+            }
+            
+            // 屏幕坐标转换为网格坐标
+            function screenToGridCoordinates(screenX, screenY) {
+                // 获取相对于网格的位置
+                const relX = screenX - game.gridOffset.x;
+                const relY = screenY - game.gridOffset.y;
+                
+                // 转换为网格坐标
+                const gridX = Math.floor(relX / game.cellSize);
+                const gridY = Math.floor(relY / game.cellSize);
+                
+                // 检查是否在网格范围内
+                if (gridX >= 0 && gridX < config.gridWidth && 
+                    gridY >= 0 && gridY < config.gridHeight) {
+                    return { x: gridX, y: gridY };
+                }
+                
+                return null;
+            }
+            
+            // 设置按钮事件处理程序
+            document.getElementById('new-game').addEventListener('click', function() {
+                initGame();
+            });
+            
+            document.getElementById('hint').addEventListener('click', function() {
+                // 简单提示：随机选择一个灯泡
+                if (!game.initialized) return;
+                
+                const x = Math.floor(Math.random() * config.gridWidth);
+                const y = Math.floor(Math.random() * config.gridHeight);
+                
+                // 取消之前的选择
+                if (game.selectedBulb) {
+                    game.selectedBulb.selected = false;
+                }
+                
+                // 选择新的灯泡
+                game.grid[y][x].selected = true;
+                game.selectedBulb = game.grid[y][x];
+                
+                // 重绘游戏
+                drawGame();
+            });
+            
+            document.getElementById('shuffle').addEventListener('click', function() {
+                // 重新排列灯泡
+                if (!game.initialized) return;
+                
+                // 收集所有颜色
+                const colors = [];
+                for (let y = 0; y < config.gridHeight; y++) {
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        if (game.grid[y][x]) {
+                            colors.push(game.grid[y][x].color);
+                        }
+                    }
+                }
+                
+                // 打乱颜色
+                for (let i = colors.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [colors[i], colors[j]] = [colors[j], colors[i]];
+                }
+                
+                // 重新分配颜色
+                let colorIndex = 0;
+                for (let y = 0; y < config.gridHeight; y++) {
+                    for (let x = 0; x < config.gridWidth; x++) {
+                        if (game.grid[y][x]) {
+                            game.grid[y][x].color = colors[colorIndex++];
+                            game.grid[y][x].selected = false;
+                        }
+                    }
+                }
+                
+                // 重置选择
+                game.selectedBulb = null;
+                
+                // 重绘游戏
+                drawGame();
+            });
+            
+            // 初始化游戏
+            initGame();
+        });
+    </script>
+</body>
+</html>

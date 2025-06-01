@@ -122,5 +122,5 @@ function testLightBulb() {
     console.log('LightBulb tests completed');
 }
 
-// Run tests
-testLightBulb();
+// Make the test function globally available
+window.testLightBulb = testLightBulb;

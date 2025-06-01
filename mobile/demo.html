@@ -118,6 +118,7 @@
     </div>
 
     <!-- Game Scripts -->
+    <script src="src/js/utils/Preloader.js"></script>
     <script src="src/js/core/LightBulb.js"></script>
     <script src="src/js/core/MatchDetector.js"></script>
     <script src="src/js/core/Board.js"></script>
@@ -128,9 +129,13 @@
     <script>
         // Simple demo implementation
         document.addEventListener('DOMContentLoaded', function() {
-            // Create game objects
-            const gridSize = { width: 8, height: 10 };
-            const colors = ['red', 'yellow', 'blue', 'green'];
+            // Initialize game immediately with generated images
+            initGame();
+            
+            function initGame() {
+                // Create game objects
+                const gridSize = { width: 8, height: 10 };
+                const colors = ['red', 'yellow', 'blue', 'green'];
             
             // Create board
             const board = new Board({
@@ -349,7 +354,7 @@
             }
             
             // Start initial game
-            startNewGame();
+            // startNewGame(); - This will be called after assets are loaded
         });
     </script>
 </body>

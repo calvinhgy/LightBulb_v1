@@ -242,18 +242,6 @@ class Renderer {
             return;
         }
         
-        // Get the appropriate image based on bulb state
-        let imageKey = `bulb_${bulb.color}`;
-        
-        if (bulb.type !== 'regular') {
-            imageKey = bulb.type === 'rainbow' ? 'bulb_rainbow' : `${imageKey}_${bulb.type}`;
-        } else if (bulb.isSelected) {
-            imageKey = `${imageKey}_selected`;
-        }
-        
-        const image = this.images[imageKey];
-        if (!image) return;
-        
         // Save context state
         ctx.save();
         
@@ -263,51 +251,69 @@ class Renderer {
         ctx.scale(bulb.scale, bulb.scale);
         ctx.globalAlpha = bulb.alpha;
         
-        // Draw bulb
+        // Draw bulb directly using canvas
         const size = this.cellSize * 0.9; // Slightly smaller than cell
-        ctx.drawImage(
-            image,
-            -size / 2,
-            -size / 2,
-            size,
-            size
-        );
         
-        // Draw glow effect if selected or special
-        if (bulb.glowIntensity > 0 || bulb.type !== 'regular') {
-            const glowSize = size * (1 + bulb.glowIntensity * 0.2);
-            ctx.globalAlpha = bulb.glowIntensity * 0.5;
-            
-            // Set glow color based on bulb type/color
-            let glowColor;
-            switch (bulb.type) {
-                case 'line':
-                    glowColor = '#ffffff';
-                    break;
-                case 'bomb':
-                    glowColor = '#ff9900';
-                    break;
-                case 'rainbow':
-                    glowColor = '#ff00ff';
-                    break;
-                default:
-                    switch (bulb.color) {
-                        case 'red': glowColor = '#ff0000'; break;
-                        case 'yellow': glowColor = '#ffcc00'; break;
-                        case 'blue': glowColor = '#0099ff'; break;
-                        case 'green': glowColor = '#00cc00'; break;
-                        default: glowColor = '#ffffff';
-                    }
+        // Draw bulb based on color
+        let bulbColor;
+        switch (bulb.color) {
+            case 'red': bulbColor = '#ff0000'; break;
+            case 'yellow': bulbColor = '#ffcc00'; break;
+            case 'blue': bulbColor = '#0099ff'; break;
+            case 'green': bulbColor = '#00cc00'; break;
+            default: bulbColor = '#ffffff';
+        }
+        
+        // Draw the bulb circle
+        ctx.fillStyle = bulbColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.beginPath();
+        ctx.arc(-size/6, -size/6, size/6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw special effects based on bulb type
+        if (bulb.type !== 'regular') {
+            if (bulb.type === 'line') {
+                // Draw line symbol
+                ctx.fillStyle = 'white';
+                ctx.fillRect(-size/3, -size/20, size*2/3, size/10);
+                ctx.fillRect(-size/20, -size/3, size/10, size*2/3);
+            } 
+            else if (bulb.type === 'bomb') {
+                // Draw bomb symbol
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(0, 0, size/4, 0, Math.PI * 2);
+                ctx.fill();
             }
-            
-            // Create radial gradient for glow
-            const gradient = ctx.createRadialGradient(0, 0, size / 2, 0, 0, glowSize / 2);
-            gradient.addColorStop(0, `${glowColor}80`); // Semi-transparent
-            gradient.addColorStop(1, `${glowColor}00`); // Transparent
-            
-            ctx.fillStyle = gradient;
+            else if (bulb.type === 'rainbow') {
+                // Draw star symbol
+                ctx.fillStyle = 'white';
+                this._drawStar(ctx, 0, 0, 5, size/3, size/6);
+                ctx.fill();
+            }
+        }
+        
+        // Draw selection effect
+        if (bulb.isSelected) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.arc(0, 0, glowSize / 2, 0, Math.PI * 2);
+            ctx.arc(0, 0, size/2 + 4, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Add glow
+            const glowGradient = ctx.createRadialGradient(0, 0, size/2, 0, 0, size/2 + 10);
+            glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+            glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, size/2 + 10, 0, Math.PI * 2);
             ctx.fill();
         }
         
@@ -531,6 +537,41 @@ class Renderer {
     }
     
     /**
+     * Draw a star shape
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} cx - Center X
+     * @param {number} cy - Center Y
+     * @param {number} spikes - Number of spikes
+     * @param {number} outerRadius - Outer radius
+     * @param {number} innerRadius - Inner radius
+     * @private
+     */
+    _drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+        let rot = Math.PI / 2 * 3;
+        let x = cx;
+        let y = cy;
+        let step = Math.PI / spikes;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outerRadius);
+        
+        for (let i = 0; i < spikes; i++) {
+            x = cx + Math.cos(rot) * outerRadius;
+            y = cy + Math.sin(rot) * outerRadius;
+            ctx.lineTo(x, y);
+            rot += step;
+
+            x = cx + Math.cos(rot) * innerRadius;
+            y = cy + Math.sin(rot) * innerRadius;
+            ctx.lineTo(x, y);
+            rot += step;
+        }
+        
+        ctx.lineTo(cx, cy - outerRadius);
+        ctx.closePath();
+    }
+}
+    /**
      * Convert grid coordinates to screen coordinates
      * @param {number} gridX - Grid X coordinate
      * @param {number} gridY - Grid Y coordinate
@@ -542,4 +583,3 @@ class Renderer {
             y: this.gridOffset.y + gridY * this.cellSize + this.cellSize / 2
         };
     }
-}
