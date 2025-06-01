@@ -110,15 +110,18 @@ class TouchController {
             this.isTouching = true;
             this.isLongPress = false;
             
-            // Get cell coordinates
-            const cell = this._getCellFromTouch(touch);
+            // 直接滑动模式下不需要先选择灯泡
+            // 移除获取单元格坐标的代码，因为我们将在滑动时处理
             
             // Start long press timer
             this.longPressTimer = setTimeout(() => {
-                if (this.isTouching && cell) {
-                    this.isLongPress = true;
-                    if (this.onCellLongPress) {
-                        this.onCellLongPress(cell.x, cell.y);
+                if (this.isTouching) {
+                    const cell = this._getCellFromCoordinates(this.touchStartX, this.touchStartY);
+                    if (cell) {
+                        this.isLongPress = true;
+                        if (this.onCellLongPress) {
+                            this.onCellLongPress(cell.x, cell.y);
+                        }
                     }
                 }
             }, this.config.longPressTimeout);

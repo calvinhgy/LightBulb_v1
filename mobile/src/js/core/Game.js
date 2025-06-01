@@ -614,7 +614,7 @@ class Game {
             return;
         }
         
-        // Swap bulbs
+        // 直接交换灯泡，无需先选择
         this.board.swapBulbs(startBulb, targetBulb);
         
         // Use a move

@@ -143,12 +143,27 @@ const SoundManager = {
             const gainNode = this.audioContext.createGain();
             gainNode.gain.value = settings.volume;
             
+            // 创建低通滤波器使声音更柔和
+            const lowPassFilter = this.audioContext.createBiquadFilter();
+            lowPassFilter.type = 'lowpass';
+            lowPassFilter.frequency.value = 2200;
+            lowPassFilter.Q.value = 0.7;
+            
+            // 创建包络器使声音更短促
+            const now = this.audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(settings.volume, now + 0.02); // 快速淡入
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.2); // 快速淡出，总持续时间约0.2秒
+            
             // 连接节点
-            source.connect(gainNode);
+            source.connect(lowPassFilter);
+            lowPassFilter.connect(gainNode);
             gainNode.connect(this.audioContext.destination);
             
             // 播放音效
             source.start(0);
+            // 设置在0.25秒后停止，确保声音短促
+            source.stop(now + 0.25);
             
             // 返回音频源，以便后续控制
             return { source, gainNode };
