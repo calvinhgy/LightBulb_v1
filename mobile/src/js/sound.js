@@ -352,9 +352,21 @@ const SoundManager = {
      * @param {number} matchSize - 匹配的灯泡数量
      */
     playMatchSound(matchSize = 3) {
-        // 根据匹配大小调整音高
-        const pitch = 1 + (matchSize - 3) * 0.1; // 3个匹配=1.0, 4个=1.1, 5个=1.2
-        this.playSFX('MATCH', { pitch });
+        // 根据匹配大小选择不同音阶的肥皂泡泡声音
+        // 限制在1-5的范围内
+        const comboLevel = Math.min(Math.max(matchSize - 2, 1), 5);
+        
+        // 使用对应音阶的肥皂泡泡声音
+        const soundId = `MATCH_${comboLevel}`;
+        
+        // 如果有特定的连消音效，则使用它，否则使用基础音效并调整音高
+        if (CONFIG.AUDIO.SFX[soundId]) {
+            this.playSFX(soundId);
+        } else {
+            // 根据匹配大小调整音高作为备选方案
+            const pitch = 1 + (matchSize - 3) * 0.15; // 3个匹配=1.0, 4个=1.15, 5个=1.3
+            this.playSFX('MATCH', { pitch });
+        }
     },
     
     /**

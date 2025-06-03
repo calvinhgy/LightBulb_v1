@@ -87,7 +87,12 @@ const CONFIG = {
         SFX: {
             SELECT: 'assets/sounds/select.mp3',
             SWAP: 'assets/sounds/swap.mp3',
-            MATCH: 'assets/sounds/match.mp3',
+            MATCH: 'sounds/match.mp3',
+            MATCH_1: 'sounds/match_1.mp3',
+            MATCH_2: 'sounds/match_2.mp3',
+            MATCH_3: 'sounds/match_3.mp3',
+            MATCH_4: 'sounds/match_4.mp3',
+            MATCH_5: 'sounds/match_5.mp3',
             INVALID: 'assets/sounds/invalid.mp3',
             SPECIAL: 'assets/sounds/special.mp3',
             LEVEL_COMPLETE: 'assets/sounds/level_complete.mp3',
